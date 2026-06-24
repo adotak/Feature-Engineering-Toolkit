@@ -34,6 +34,15 @@ from src.visualization import (
 
 DIVIDER = "=" * 64
 
+# Centralized configuration settings
+CONFIG = {
+    "data_path": "data/students.csv",
+    "lasso_alpha": 0.01,
+    "rfe_features": 3,
+    "chi_k": 3,
+    "poly_degree": 2
+}
+
 
 def header(title: str) -> None:
     print(f"\n{DIVIDER}")
@@ -45,7 +54,7 @@ def header(title: str) -> None:
 def main() -> None:
     # ── Load data ────────────────────────────────────────────────────────
     header("LOADING DATASET")
-    df = load_dataset()
+    df = load_dataset(CONFIG["data_path"])
     summary = describe_dataset(df)
     print(f"Shape : {summary['shape']}")
     print(f"Nulls : {sum(summary['null_counts'].values())} total missing values")
@@ -85,7 +94,7 @@ def main() -> None:
 
     # 5. Polynomial features
     header("5 - POLYNOMIAL FEATURES  (Study_Hours, Previous_GPA - degree 2)")
-    df = create_polynomial_features(df, ["Study_Hours", "Previous_GPA"], degree=2)
+    df = create_polynomial_features(df, ["Study_Hours", "Previous_GPA"], degree=CONFIG["poly_degree"])
     poly_cols = [c for c in df.columns if "pow" in c or "_x_Previous" in c]
     print(df[["Student_ID", "Study_Hours", "Previous_GPA"] + poly_cols].head(10).to_string(index=False))
     print("  -> Enables linear models to capture nonlinear relationships.")
@@ -105,22 +114,22 @@ def main() -> None:
 
     # 6. Chi-Square (Filter)
     header("6 - CHI-SQUARE TEST  (Filter Method)")
-    chi_df, chi_selected = chi_square_selection(X, y, k=3)
+    chi_df, chi_selected = chi_square_selection(X, y, k=CONFIG["chi_k"])
     print(chi_df.to_string(index=False))
     print(f"\n  Top 3 selected: {chi_selected}")
 
     # 7. RFE (Wrapper)
     header("7 - RECURSIVE FEATURE ELIMINATION  (Wrapper Method)")
-    rfe_df, rfe_selected = rfe_selection(X, y, n_features=3)
+    rfe_df, rfe_selected = rfe_selection(X, y, n_features=CONFIG["rfe_features"])
     print(rfe_df.to_string(index=False))
     print(f"\n  Top 3 selected: {rfe_selected}")
 
     # 8. LASSO (Embedded)
     header("8 - LASSO REGRESSION  (Embedded Method)")
-    lasso_df, retained, removed = lasso_selection(X, y, alpha=0.01)
+    lasso_df, retained, removed = lasso_selection(X, y, alpha=CONFIG["lasso_alpha"])
     print(lasso_df.to_string(index=False))
     print(f"\n  Retained: {retained}")
-    print(f"  Removed : {removed if removed else 'None at alpha=0.01'}")
+    print(f"  Removed : {removed if removed else f'None at alpha={CONFIG[\"lasso_alpha\"]}'}")
 
     # ======================================================================
     #  PART 3 -- VISUALIZATIONS
